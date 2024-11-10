@@ -11,13 +11,13 @@
   justify-content: space-between;
   margin-bottom: 1.5rem;
 }
-label{
+.label{
   width: 240px;
 }
 .form__input{
   width: 100%;
 }
-input,textarea{
+.input,.textarea{
   width: 100%;
   border: 1px solid rgb(209 213 219);
   border-radius: .5rem;
@@ -36,6 +36,11 @@ input,textarea{
   border-radius: .5rem;
   padding: .5rem 1rem;
   cursor: pointer;
+  transition: 0.3s ease-in-out;
+
+  &:hover {
+    opacity: 0.7;
+  }
 }
 .submit{
   color: white;

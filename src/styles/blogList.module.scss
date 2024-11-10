@@ -4,8 +4,13 @@
 
 .card__link {
   display: block;
-  border: 1px solid var(--clr-border);
+  border: 1px solid var(--color-border);
   padding: 1rem;
+  transition: 0.3s ease-in-out;
+
+  &:hover {
+    opacity: 0.7;
+  }
 }
 
 .card__head {
@@ -15,7 +20,7 @@
 }
 
 .card__date {
-  color: var(--clr-gray);
+  color: var(--color-gray);
   font-size: 0.8rem;
 }
 
@@ -44,9 +49,9 @@
 }
 
 .category__item {
-  color: var(--clr-secondary);
+  color: var(--color-secondary);
   font-size: 0.8rem;
-  border: 1px solid var(--clr-secondary);
+  border: 1px solid var(--color-secondary);
   border-radius: 0.2rem;
   margin-right: 0.5rem;
   padding: 0.2rem 0.4rem;

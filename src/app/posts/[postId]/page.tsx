@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from 'next/navigation'
 import { PostType } from '@/app/_types/PostType';
 import Image from 'next/image';
+import styles from '@/styles/blogList.module.scss'
 
 
 const PostsDetails: React.FC = () => {
@@ -39,20 +40,20 @@ const PostsDetails: React.FC = () => {
 
   return(
     <article className='post'>
-      <div className='post__img'>
+      <div className={styles.post__img}>
         <Image src={post.thumbnailUrl} alt={post.title} width={800} height={400} />
       </div>
-      <div className='post__content'>
-        <div className='post__head'>
-          <p className='post__date'>{dateText}</p>
-          <ul className='category'>
+      <div className={styles.post__content}>
+        <div className={styles.post__head}>
+          <p className={styles.post__date}>{dateText}</p>
+          <ul className={styles.category}>
             {post.categories.map(category => (
-              <li className='category__item' key={category}>{category}</li>
+              <li className={styles.category__item} key={category}>{category}</li>
               ))}
           </ul>
         </div>
-        <h1 className='post__title'>{post.title}</h1>
-        <p className='post__details' dangerouslySetInnerHTML={{ __html: post.content }} />
+        <h1 className={styles.post__title}>{post.title}</h1>
+        <p className={styles.post__details} dangerouslySetInnerHTML={{ __html: post.content }} />
       </div>
     </article>
   );

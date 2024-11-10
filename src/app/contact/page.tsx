@@ -1,6 +1,7 @@
 "use client";
 import { API_BASE_URL } from "@/app/constants";
 import { FieldErrors, useForm } from "react-hook-form";
+import styles from '@/styles/contact.module.scss'
 
 
 type FormData = {
@@ -39,12 +40,12 @@ const Contact: React.FC = () => {
 
   return(
     <div>
-      <h1 className='title'>問合わせフォーム</h1>
+      <h1 className={styles.title}>問合わせフォーム</h1>
       <form name='contactForm' onSubmit={handleSubmit(onSubmit, onError)} noValidate>
-        <div className='form__item'>
-          <label htmlFor='name'>お名前</label>
-          <div className='form__input'>
-            <input id='name' type='text'
+        <div className={styles.form__item}>
+          <label className={styles.label} htmlFor='name'>お名前</label>
+          <div className={styles.form__input}>
+            <input className={styles.input}id='name' type='text'
               {...register('name',{
                 required: '名前は必須入力です。',
                 maxLength: {
@@ -54,14 +55,14 @@ const Contact: React.FC = () => {
               })}
               disabled={isSubmitting}
             />
-            <p className='error'>{errors.name?.message}</p>
+            <p className={styles.error}>{errors.name?.message}</p>
           </div>
         </div>
 
-        <div className='form__item'>
-          <label htmlFor='email'>メールアドレス</label>
-          <div className='form__input'>
-            <input id='email' type='text'
+        <div className={styles.form__item}>
+          <label className={styles.label} htmlFor='email'>メールアドレス</label>
+          <div className={styles.form__input}>
+            <input className={styles.input}id='email' type='text'
               {...register('email',{
                 required: 'メールアドレスは必須入力です。',
                 pattern: {
@@ -71,13 +72,13 @@ const Contact: React.FC = () => {
               })}
               disabled={isSubmitting}
             />
-            <p className='error'>{errors.email?.message}</p>
+            <p className={styles.error}>{errors.email?.message}</p>
           </div>
         </div>
-        <div className='form__item'>
-          <label htmlFor='message'>本文</label>
-          <div className='form__input'>
-            <textarea id='message' rows={8}
+        <div className={styles.form__item}>
+          <label className={styles.label} htmlFor='message'>本文</label>
+          <div className={styles.form__input}>
+            <textarea className={styles.textarea}id='message' rows={8}
               {...register('message',{
                 required: '本文は必須入力です。',
                 maxLength: {
@@ -87,12 +88,12 @@ const Contact: React.FC = () => {
               })}
               disabled={isSubmitting}
             ></textarea>
-            <p className='error'>{errors.message?.message}</p>
+            <p className={styles.error}>{errors.message?.message}</p>
           </div>
         </div>
-        <div className='form__btn'>
-          <button className='submit' type='submit' disabled={isSubmitting}>送信</button>
-          <button className='clear' type='button' onClick={handleReset} disabled={isSubmitting}>クリア</button>
+        <div className={styles.form__btn}>
+          <button className={styles.submit} type='submit' disabled={isSubmitting}>送信</button>
+          <button className={styles.clear} type='button' onClick={handleReset} disabled={isSubmitting}>クリア</button>
         </div>
       </form>
     </div>
