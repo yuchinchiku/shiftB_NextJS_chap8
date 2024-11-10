@@ -1,0 +1,69 @@
+@charset "UTF-8";
+
+:root {
+  /**
+   * Color variables
+  ==================== */
+  @each $color, $value in $colors {
+    --clr-#{$color}: #{$value};
+  }
+
+  /**
+   * Font size variables
+  ==================== */
+
+  @each $size, $value in $font-sizes {
+    --fs-#{$size}: #{$value};
+  }
+
+  /**
+   * Font variables
+  ==================== */
+
+  @each $font, $value in $font-families {
+    --ff-#{$font}: #{$value};
+  }
+}
+
+html {
+  font-family: var(--ff-default);
+  font-size: var(--fs-md);
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background-color: var(--clr-white);
+  color: var(--clr-text);
+  line-height: 1.6;
+}
+
+a {
+  text-decoration: none;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+img {
+  height: auto;
+  object-fit: contain;
+}
+
+i {
+  display: flex;
+  align-items: center;
+}
+
+.content {
+  max-width: 800px;
+  margin: 120px auto 40px;
+  padding: 0 1rem;
+}
+
+a {
+  transition: 0.3s ease-in-out;
+}
+
+a:hover {
+  opacity: 0.7;
+}

@@ -1,14 +1,13 @@
 "use client";
-import { API_BASE_URL } from "@/app/constants";
-import Link from "next/link";
 import React, { useEffect, useState }  from "react";
-import { PostType } from "@/app/_types/PostType"
+import Link from "next/link";
+import { PostType } from './_types/PostType';
 
 type PostsResponse = {
   posts: PostType[]
 };
 
-export default function Home() {
+const BlogList: React.FC = () => {
 
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -16,7 +15,7 @@ export default function Home() {
   useEffect(() => {
     const fetcher = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/posts`)
+        const res = await fetch("https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts")
         const data = await res.json() as PostsResponse;
         setPosts(data.posts)
       } finally {
@@ -30,7 +29,8 @@ export default function Home() {
   if(loading) {
     return <p>Loading...</p>;
   }
-  return (
+
+  return(
     <ul className='card'>
       {posts.map((elem) => {
         const date = new Date(elem.createdAt);
@@ -57,4 +57,7 @@ export default function Home() {
       })}
     </ul>
   );
-}
+};
+
+
+export default BlogList;

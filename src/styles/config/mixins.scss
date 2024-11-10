@@ -1,0 +1,28 @@
+/**
+ * mixins
+==================== */
+
+/// mq
+/// @param {number|string} $size [md] - size in pixel
+/// @param {number} $width [max] - max|min
+@mixin mq($size: md, $width: max) {
+  $result: 0;
+
+  @if type-of($size) == number {
+    $result: $size;
+  } @else {
+    @each $key, $value in $breakpoints {
+      @if $key == $size {
+        $result: $value;
+      }
+    }
+  }
+
+  @if $width == min {
+    $result: $result + 1;
+  }
+
+  @media (#{$width}-width: #{$result}px) {
+    @content;
+  }
+}

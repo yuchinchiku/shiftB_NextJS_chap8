@@ -1,0 +1,27 @@
+/**
+ * vw変換
+==================== */
+/// Media Queries
+
+@function vw($px, $size) {
+  $value: map.get($design-sizes, sp);
+
+  @if $size == "pc" {
+    $value: map.get($design-sizes, pc);
+  }
+
+  $rate: 100 / $value;
+
+  @return $rate * $px * 1vw;
+}
+
+/**
+ * em変換
+==================== */
+/// em変換
+
+@function em($size) {
+  $em: $size * 0.0625em;
+
+  @return $em;
+}
