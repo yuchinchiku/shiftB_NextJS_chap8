@@ -1,95 +1,61 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import { API_BASE_URL } from "@/app/constants";
+import Link from "next/link";
+import React, { useEffect, useState }  from "react";
+import { PostType } from "@/app/_types/PostType"
+import styles from '@/styles/blogList.module.scss'
+
+type PostsResponse = {
+  posts: PostType[]
+};
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const [posts, setPosts] = useState<PostType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  // APIでpostsを取得する処理をuseEffectで実行します。
+  useEffect(() => {
+    const fetcher = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/posts`)
+        const data = await res.json() as PostsResponse;
+        setPosts(data.posts)
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetcher()
+  }, []);
+
+  if(loading) {
+    return <p>Loading...</p>;
+  }
+  return (
+    <ul className='card'>
+      {posts.map((elem) => {
+        const date = new Date(elem.createdAt);
+        const dateText = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+
+        return (
+          <li className={styles.card__item} key={elem.id}>
+            <Link className={styles.card__link} href={`/posts/${elem.id}/`}>
+              <div className={styles.card__head}>
+                <p className={styles.card__date}>{dateText}</p>
+                <ul className={styles.category}>
+                  {elem.categories.map(category =>
+                    <li className={styles.category__item} key={category}>{category}</li>
+                  )}
+                </ul>
+              </div>
+              <div className={styles.card__body}>
+                  <p className={styles.card__title}>{elem.title}</p>
+                  <p className={styles.card__desc} dangerouslySetInnerHTML={{ __html: elem.content }} />
+              </div>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

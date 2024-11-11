@@ -1,0 +1,24 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: var(--color-primary);
+  padding: 24px;
+}
+
+.navList {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navList__link {
+  color: white;
+  font-weight: 700;
+  transition: 0.3s ease-in-out;
+  &:hover {
+    opacity: 0.7;
+  }
+}
