@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import type { CategoriesResponse, ErrorResponse, CreateCategoryResponse, CreateCategoryRequestBody } from '@/app/_types/CategoryTypes'
 
 const prisma = new PrismaClient()
 
@@ -11,17 +12,22 @@ export const GET = async (request: NextRequest) => {
         createdAt: 'desc',
       },
     })
-    return NextResponse.json({ status: 'OK', categories }, { status: 200 })
+
+    const response: CategoriesResponse = {
+      status: 'OK',
+      categories: categories,
+    }
+    return NextResponse.json(response, { status: 200 })
   } catch (error){
     if (error instanceof Error) {
-      return NextResponse.json({ status: error.message }, { status: 400 })
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+      return NextResponse.json(response, {status: 400 })
     }
   }
 }
 
-interface CreateCategoryRequestBody {
-  name: string
-}
 
 export const POST = async (request: NextRequest, context: any ) => {
   try {
@@ -32,14 +38,19 @@ export const POST = async (request: NextRequest, context: any ) => {
         name
       }
     })
-    return NextResponse.json({
+
+    const response: CreateCategoryResponse = {
       status: 'OK',
       message: '作成しました',
       id: data.id
-    })
+    }
+    return NextResponse.json(response)
   } catch(error){
     if ( error instanceof Error) {
-      return NextResponse.json({ status: error.message }, { status: 400 })
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+      return NextResponse.json(response, {status: 400 })
     }
   }
 }

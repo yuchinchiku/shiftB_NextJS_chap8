@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import React, { useEffect, useState }  from "react";
-import { PostType } from "@/app/_types/PostType"
+import type { PostListResponse, PostListType } from "@/app/_types/PostType"
 import styles from '@/styles/blogList.module.scss'
 
 
 export default function Home() {
-  const [posts, setPosts] = useState<PostType[]>([]);
+  const [posts, setPosts] = useState<PostListType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   // APIでpostsを取得する処理をuseEffectで実行します。
 
@@ -17,7 +17,7 @@ export default function Home() {
 
       console.log('Response Status:', res.status);
       console.log('Response Headers:', res.headers);
-      const data = await res.json();
+      const data: PostListResponse = await res.json();
       console.log('API Response:', data);
 
       setPosts(data.posts);

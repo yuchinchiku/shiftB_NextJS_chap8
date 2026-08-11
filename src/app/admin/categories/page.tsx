@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import React, { useEffect, useState }  from "react";
-import { CategoryType } from "@/app/_types/CategoryTypes"
 import styles from '@/styles/blogList.module.scss'
+import type { CategoryType, CategoriesResponse } from '@/app/_types/CategoryTypes'
 
 
 export default function CategoryPage() {
@@ -14,7 +14,7 @@ export default function CategoryPage() {
   const fetcher = async () => {
     try {
       const res = await fetch('/api/admin/categories');
-      const data = await res.json();
+      const data: CategoriesResponse = await res.json();
 
       setCategories(data.categories);
     } catch (error) {

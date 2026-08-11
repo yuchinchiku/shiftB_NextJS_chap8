@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import type {PostResponse, ErrorResponse} from '@/app/_types/PostType'
 
 const prisma = new PrismaClient()
 
@@ -10,7 +11,7 @@ export const GET = async (
 ) => {
   const { id } = params
   try {
-    // Postの一覧をDBから取得
+    // Postを1件DBから取得
     const post = await prisma.post.findUnique({
       where: {
         //  parseIntがなぜ必要なのか？
@@ -33,10 +34,34 @@ export const GET = async (
         },
       },
     })
+    if (!post) {
+      const response: PostResponse = {
+        status: 'NOT_FOUND',
+        post: null
+      }
+      return NextResponse.json(response, { status: 404 } )
+    }
     // レスポンスを返す
-    return NextResponse.json({ status: 'OK', post: post },{ status: 200 } )
+    const response: PostResponse = {
+      status: 'OK',
+      post: {
+        id: post.id,
+        title: post.title,
+        thumbnailUrl: post.thumbnailUrl,
+        createdAt: post.createdAt.toISOString(),
+        categories: post.postCategories.map(
+          (postCategory) => postCategory.category
+        ),
+        content: post.content,
+      }
+    }
+    return NextResponse.json(response, { status: 200 } )
   } catch (error) {
-    if (error instanceof Error)
-      return NextResponse.json({ status: error.message },{ status: 400 })
+    if (error instanceof Error){
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+      return NextResponse.json(response, { status: 400 })
+    }
   }
 }

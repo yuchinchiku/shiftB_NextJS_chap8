@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import type {PostListResponse, ErrorResponse} from '@/app/_types/PostType'
 
 const prisma = new PrismaClient()
 
@@ -28,9 +29,23 @@ export const GET = async (request: NextRequest) => {
       },
     })
     // レスポンスを返す
-    return NextResponse.json({ status: 'OK', posts: posts }, { status: 200 })
+
+    const response: PostListResponse = {
+      status: 'OK',
+      posts: posts.map((post) => ({
+        id: post.id,
+        title:post.title,
+        createdAt: post.createdAt.toISOString(),
+        content: post.content,
+      }))
+    }
+    return NextResponse.json(response,{ status: 200 } )
   } catch (error) {
-    if (error instanceof Error)
-      return NextResponse.json({ status: error.message }, { status: 400 })
+    if (error instanceof Error){
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+      return NextResponse.json(response, { status: 400 })
+    }
   }
 }

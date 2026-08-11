@@ -1,11 +1,8 @@
 "use client";
 import React, { useEffect, useState }  from "react";
 import { useParams,useRouter } from "next/navigation";
-import styles from '@/styles/contact.module.scss'
-
-// type PostsResponse = {
-//   posts: PostType[]
-// };
+import CategoryForm from "@/app/_components/CategoryForm";
+import type { CategoryResponse, UpdateCategoryRequestBody } from '@/app/_types/CategoryTypes'
 
 export default function EditCategoryPage() {
   const { id } = useParams();
@@ -15,8 +12,11 @@ export default function EditCategoryPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       const res = await fetch(`/api/admin/categories/${id}`);
-      const data = await res.json();
+      const data:CategoryResponse = await res.json();
 
+      if(!data.categories){
+        return;
+      }
       setName(data.categories.name);
     }
     fetchCategories();
@@ -26,14 +26,15 @@ export default function EditCategoryPage() {
   const handleSubmit = async (e:React.FormEvent) => {
     e.preventDefault();
     try {
+      const body: UpdateCategoryRequestBody = {
+        name
+      }
       const res = await fetch(`/api/admin/categories/${id}`,{
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-      body: JSON.stringify({
-        name,
-      }),
+      body: JSON.stringify(body),
     });
 
       if (res.ok) {
@@ -58,16 +59,15 @@ export default function EditCategoryPage() {
     router.push("/admin/categories");
   };
   return (
-    <form onSubmit={handleSubmit}>
-      <h1 className={styles.title}>カテゴリー編集</h1>
-      <div className={styles.form__item}>
-        <label className={styles.label}>カテゴリー名</label>
-          <input className={styles.input} value={name} onChange={(e)=> setName(e.target.value)} />
-      </div>
-      <div className={styles.form__btn}>
-        <button className={styles.submit} type="submit">更新</button>
-        <button className={styles.delete} type="button" onClick={handleDeleteCategory}>削除</button>
-      </div>
-    </form>
+    <>
+      <CategoryForm
+        pageTitle="カテゴリー編集"
+        name={name}
+        onChangeName={setName}
+        onSubmit={handleSubmit}
+        buttonText="更新"
+        onDelete={handleDeleteCategory}
+      />
+    </>
   );
 }

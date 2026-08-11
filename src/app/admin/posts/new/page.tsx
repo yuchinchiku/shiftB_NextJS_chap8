@@ -1,12 +1,9 @@
 "use client";
 import React, { useEffect, useState }  from "react";
-import { CategoryType } from "@/app/_types/CategoryTypes"
 import { useRouter } from "next/navigation";
-import styles from '@/styles/contact.module.scss'
-
-// type PostsResponse = {
-//   posts: PostType[]
-// };
+import PostForm from "@/app/_components/PostForm";
+import type { CategoryType, CategoriesResponse } from '@/app/_types/CategoryTypes'
+import type { CreatePostRequestBody, CreatePostResponse} from '@/app/_types/PostType'
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -14,14 +11,14 @@ export default function NewPostPage() {
   const [content, setContent] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("https://placehold.jp/800x400.png",);
   const [allCategories, setAllCategories] = useState<CategoryType[]>([]);
-  const [categories, setCategories] = useState("");
+  const [categories, setCategories] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
       const res = await fetch(`/api/admin/categories`);
-      const data = await res.json();
+      const data: CategoriesResponse = await res.json();
 
-      setAllCategories(data.categories);
+      setAllCategories(data.categories ?? []);
     }
     fetchCategories();
   },[])
@@ -29,21 +26,23 @@ export default function NewPostPage() {
   const handleSubmit = async (e:React.FormEvent) => {
     e.preventDefault();
     try {
+      const body:CreatePostRequestBody ={
+        title,
+        content,
+        thumbnailUrl: thumbnailUrl,
+        categories: categories.map((id) => ({id}))
+      }
       const res = await fetch(`/api/admin/posts`,{
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-      body: JSON.stringify({
-        title,
-        content,
-        thumbnailUrl: thumbnailUrl,
-        categories: [{id: Number(categories)}]
-      }),
+        body: JSON.stringify(body),
     });
 
       if (res.ok) {
-        alert("作成しました");
+        const data: CreatePostResponse = await res.json();
+        alert(data.message);
         router.push("/admin/posts");
       } else {
         console.error("作成失敗:", await res.text());
@@ -55,42 +54,21 @@ export default function NewPostPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1 className={styles.title}>記事編集</h1>
-      <div className={styles.form__item}>
-        <label className={styles.label}>タイトル</label>
-        <div className={styles.form__input}>
-          <input className={styles.input} value={title} onChange={(e)=> setTitle(e.target.value)} />
-        </div>
-      </div>
-      <div className={styles.form__item}>
-        <label className={styles.label}>内容</label>
-        <div className={styles.form__input}>
-          <textarea className={styles.textarea} value={content}rows={8}  onChange={(e)=> setContent(e.target.value)} />
-        </div>
-      </div>
-      <div className={styles.form__item}>
-        <label className={styles.label}>サムネイルURL</label>
-        <div className={styles.form__input}>
-          <input className={styles.input} value={thumbnailUrl} onChange={(e)=> setThumbnailUrl(e.target.value)} />
-        </div>
-      </div>
-      <div className={styles.form__item}>
-        <label className={styles.label}>カテゴリ</label>
-        <div className={styles.form__input}>
-          <select className={styles.input} value={categories} onChange={(e)=> setCategories(e.target.value)} >
-            <option value="">選択してください</option>
-            {allCategories.map((cat) =>
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          )}
-          </select>
-        </div>
-      </div>
-      <div className={styles.form__btn}>
-        <button className={styles.submit} type="submit">作成</button>
-      </div>
-    </form>
+    <>
+      <PostForm
+        pageTitle="記事作成"
+        title={title}
+        content={content}
+        thumbnailUrl={thumbnailUrl}
+        allCategories={allCategories}
+        categories={categories}
+        onChangeTitle={setTitle}
+        onChangeContent={setContent}
+        onChangeThumbnailUrl={setThumbnailUrl}
+        onChangeCategories={setCategories}
+        onSubmit={handleSubmit}
+        buttonText="作成"
+      />
+    </>
   );
 }

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import type { CategoryResponse, UpdateCategoryResponse, ErrorResponse, DeleteCategoryResponse } from '@/app/_types/CategoryTypes'
 
 const prisma  = new PrismaClient()
-
 
 export const GET = async (
   request: NextRequest,
@@ -16,10 +16,18 @@ export const GET = async (
         id: parseInt(id),
       }
     })
-    return NextResponse.json({ status: 'OK', categories: category }, { status: 200 })
+
+    const response: CategoryResponse = {
+      status: 'OK',
+      categories: category,
+    }
+    return NextResponse.json(response, { status: 200 })
   } catch (error){
     if (error instanceof Error) {
-      return NextResponse.json({ status: error.message }, { status: 400 })
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+        return NextResponse.json(response, {status: 400 })
     }
   }
 }
@@ -46,10 +54,17 @@ export const PUT = async (
       }
     })
 
-    return NextResponse.json({ status: 'OK', category })
+    const response: UpdateCategoryResponse = {
+      status: 'OK',
+      categories: category,
+    }
+    return NextResponse.json(response)
   } catch(error){
     if (error instanceof Error){
-      return NextResponse.json({ status: error.message }, {status: 400 })
+    const response: ErrorResponse = {
+      status: error.message,
+    }
+      return NextResponse.json(response, {status: 400 })
     }
   }
 }
@@ -66,10 +81,17 @@ export const DELETE = async(
         id: parseInt(id)
       }
     })
-    return NextResponse.json({ status: 'OK' }, { status: 200 })
+    const response: DeleteCategoryResponse ={
+      status: 'OK',
+
+    }
+    return NextResponse.json(response, { status: 200 })
   } catch(error){
     if (error instanceof Error){
-      return NextResponse.json({ status: error.message }, { status: 400 })
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+      return NextResponse.json(response, {status: 400 })
     }
   }
 }

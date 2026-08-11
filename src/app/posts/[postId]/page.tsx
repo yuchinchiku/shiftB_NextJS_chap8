@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from 'next/navigation'
-import { MicroCmsPost } from "@/app/_types/MicroCmsPost"
 import Image from 'next/image';
 import styles from '@/styles/blogList.module.scss'
 
@@ -17,13 +16,7 @@ const PostsDetails: React.FC = () => {
     const fetcher = async () => {
       try {
         console.log(`Fetching data for post ID: ${postId}`);
-        const res = await fetch(`https://hixddt5c8l.microcms.io/api/v1/posts/${postId}`,
-          {
-            headers: {
-              'X-MICROCMS-API-KEY': process.env
-                .NEXT_PUBLIC_MICROCMS_API_KEY as string,
-            },
-          }
+        const res = await fetch(`/api/admin/posts/${postId}`,
         );
         const data = await res.json();
         setPost(data);

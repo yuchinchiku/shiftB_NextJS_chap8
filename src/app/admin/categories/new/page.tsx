@@ -1,7 +1,8 @@
 "use client";
 import React, { useState }  from "react";
 import { useRouter } from "next/navigation";
-import styles from '@/styles/contact.module.scss'
+import CategoryForm from "@/app/_components/CategoryForm";
+import type { CreateCategoryResponse,CreateCategoryRequestBody } from '@/app/_types/CategoryTypes'
 
 
 
@@ -14,18 +15,20 @@ export default function NewCategoryPage() {
   const handleSubmit = async (e:React.FormEvent) => {
     e.preventDefault();
     try {
+      const body: CreateCategoryRequestBody = {
+        name
+      }
       const res = await fetch(`/api/admin/categories`,{
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-      body: JSON.stringify({
-        name,
-      }),
+        body: JSON.stringify(body),
     });
 
       if (res.ok) {
-        alert("作成しました");
+        const data: CreateCategoryResponse = await res.json();
+        alert(data.message);
         router.push("/admin/categories");
       } else {
         console.error("作成失敗:", await res.text());
@@ -38,15 +41,14 @@ export default function NewCategoryPage() {
 
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1 className={styles.title}>カテゴリー作成</h1>
-      <div className={styles.form__item}>
-        <label className={styles.label}>カテゴリー名</label>
-          <input className={styles.input} value={name} onChange={(e)=> setName(e.target.value)} />
-      </div>
-      <div className={styles.form__btn}>
-        <button className={styles.submit} type="submit">作成</button>
-      </div>
-    </form>
+    <>
+      <CategoryForm
+        pageTitle="カテゴリー作成"
+        name={name}
+        onChangeName={setName}
+        onSubmit={handleSubmit}
+        buttonText="作成"
+      />
+    </>
   );
 }

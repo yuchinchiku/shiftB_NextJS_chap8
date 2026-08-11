@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Category, PrismaClient } from '@prisma/client'
-import { PathParamsContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
+import { PrismaClient } from '@prisma/client'
+import type {PostResponse, ErrorResponse, UpdatePostRequestBody, UpdatePostResponse, DeletePostResponse} from '@/app/_types/PostType'
 
 const prisma = new PrismaClient()
 
@@ -11,7 +11,7 @@ export const GET = async (
 ) => {
   const { id } = params
   try {
-    // Postの一覧をDBから取得
+    // Postを1件DBから取得
     const post = await prisma.post.findUnique({
       where: {
         id: parseInt(id),
@@ -31,19 +31,37 @@ export const GET = async (
         },
       },
     })
-    // レスポンスを返す
-    return NextResponse.json({ status: 'OK', post: post }, { status: 200 } )
-  } catch (error) {
-    if (error instanceof Error)
-      return NextResponse.json({ status: error.message }, { status: 400 })
-  }
-}
 
-interface UpdatePostRequestBody {
-  title: string
-  content: string
-  categories: { id: number }[]
-  thumbnailUrl: string
+    if (!post) {
+      const response: PostResponse = {
+        status: 'NOT_FOUND',
+        post: null
+      }
+      return NextResponse.json(response, { status: 404 } )
+    }
+    // レスポンスを返す
+    const response: PostResponse = {
+      status: 'OK',
+      post: {
+        id: post.id,
+        title: post.title,
+        thumbnailUrl: post.thumbnailUrl,
+        createdAt: post.createdAt.toISOString(),
+        categories: post.postCategories.map(
+          (postCategory) => postCategory.category
+        ),
+        content: post.content,
+      }
+    }
+    return NextResponse.json(response, { status: 200 } )
+  } catch (error) {
+    if (error instanceof Error){
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+      return NextResponse.json(response, { status: 400 })
+    }
+  }
 }
 
 export const PUT = async (
@@ -79,11 +97,52 @@ export const PUT = async (
         },
       })
     }
+    const updatedPost = await prisma.post.findUnique({
+      where: {
+        id: post.id,
+      },
+      include: {
+        postCategories: {
+          include: {
+            category: {
+              select: {
+                id:true,
+                name:true,
+              },
+            },
+          },
+        },
+      }
+    })
 
-    return NextResponse.json({ status:'OK', post: post}, {status: 200 })
+    if(!updatedPost){
+      const response: ErrorResponse ={
+        status: '記事が見つかりません'
+      }
+      return NextResponse.json(response, {status: 404})
+    }
+
+    const response: UpdatePostResponse = {
+      status: 'OK',
+      post: {
+        id: updatedPost.id,
+        title: updatedPost.title,
+        thumbnailUrl: updatedPost.thumbnailUrl,
+        createdAt: updatedPost.createdAt.toISOString(),
+        categories: updatedPost.postCategories.map(
+          (updatedPostCategory) => updatedPostCategory.category
+        ),
+        content: updatedPost.content,
+      }
+    }
+    return NextResponse.json(response, { status: 200 } )
   } catch (error) {
-    if (error instanceof Error)
-      return NextResponse.json({ status: error.message },{ status: 400 })
+    if (error instanceof Error){
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+      return NextResponse.json(response, { status: 400 })
+    }
   }
 }
 
@@ -99,10 +158,17 @@ export const DELETE = async (
       },
     })
 
-    return NextResponse.json({ status: 'OK' }, { status: 200 })
+    const response: DeletePostResponse ={
+      status: 'OK'
+    }
+    return NextResponse.json(response, { status: 200 })
   } catch (error) {
-    if (error  instanceof Error)
-      return NextResponse.json({ status: error.message }, { status: 400 })
+    if (error instanceof Error){
+      const response: ErrorResponse = {
+        status: error.message,
+      }
+      return NextResponse.json(response, { status: 400 })
+    }
   }
 
 }
