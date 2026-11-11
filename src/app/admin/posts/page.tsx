@@ -2,18 +2,32 @@
 import Link from "next/link";
 import React, { useEffect, useState }  from "react";
 import type { PostListResponse, PostListType } from "@/app/_types/PostType"
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
 import styles from '@/styles/blogList.module.scss'
 
 
 export default function Home() {
+  const { token, isLoading: sessionLoading } = useSupabaseSession()
+
   const [posts, setPosts] = useState<PostListType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   // APIでpostsを取得する処理をuseEffectで実行します。
 
   useEffect(() => {
+    if (sessionLoading) return
+
+    if (!token) {
+      setLoading(false)
+      return
+    }
   const fetcher = async () => {
     try {
-      const res = await fetch('/api/admin/posts');
+      const res = await fetch('/api/admin/posts', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+      });
 
       console.log('Response Status:', res.status);
       console.log('Response Headers:', res.headers);
@@ -29,7 +43,7 @@ export default function Home() {
   };
 
   fetcher();
-}, []);
+}, [token, sessionLoading]);
 
   if(loading) {
     return <p>Loading...</p>;

@@ -1,7 +1,23 @@
-import Link from 'next/link';
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useRouteGuard } from './_hooks/useRouteGuard'
 import styles from '@/styles/blogList.module.scss'
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  useRouteGuard()
+
+  const pathname = usePathname()
+  const isSelected = (href: string) => {
+    return pathname.includes(href)
+  }
+
   return(
     <>
       <div className={styles.aside__wrapper}>

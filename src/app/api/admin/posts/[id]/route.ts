@@ -7,9 +7,9 @@ const prisma = new PrismaClient()
 // GETという命名にすることで、GETリクエストの時にこの関数が呼ばれる
 export const GET = async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) => {
-  const { id } = params
+ const { id } = await params;
   try {
     // Postを1件DBから取得
     const post = await prisma.post.findUnique({
@@ -45,7 +45,7 @@ export const GET = async (
       post: {
         id: post.id,
         title: post.title,
-        thumbnailUrl: post.thumbnailUrl,
+        thumbnailImageKey: post.thumbnailImageKey,
         createdAt: post.createdAt.toISOString(),
         categories: post.postCategories.map(
           (postCategory) => postCategory.category
@@ -66,11 +66,11 @@ export const GET = async (
 
 export const PUT = async (
   request: NextRequest,
-  { params }: { params : { id: string }},
+  { params }: { params : Promise<{ id: string }> },
 ) => {
-  const { id } = params
+  const { id } = await params;
 
-  const { title, content, categories, thumbnailUrl} : UpdatePostRequestBody = await request.json()
+  const { title, content, categories, thumbnailImageKey} : UpdatePostRequestBody = await request.json()
   try {
     const post = await prisma.post.update({
       where: {
@@ -79,7 +79,7 @@ export const PUT = async (
       data:{
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     })
 
@@ -127,7 +127,7 @@ export const PUT = async (
       post: {
         id: updatedPost.id,
         title: updatedPost.title,
-        thumbnailUrl: updatedPost.thumbnailUrl,
+        thumbnailImageKey: updatedPost.thumbnailImageKey,
         createdAt: updatedPost.createdAt.toISOString(),
         categories: updatedPost.postCategories.map(
           (updatedPostCategory) => updatedPostCategory.category
@@ -148,9 +148,9 @@ export const PUT = async (
 
 export const DELETE = async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) => {
-  const { id } = params
+  const { id } = await params
   try {
     await prisma.post.delete({
       where: {
