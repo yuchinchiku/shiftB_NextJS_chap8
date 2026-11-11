@@ -1,25 +1,30 @@
 "use client";
-import { API_BASE_URL } from "@/app/constants";
 import Link from "next/link";
 import React, { useEffect, useState }  from "react";
-import { PostType } from "@/app/_types/PostType"
+import { MicroCmsPost } from "@/app/_types/MicroCmsPost"
 import styles from '@/styles/blogList.module.scss'
 
-type PostsResponse = {
-  posts: PostType[]
-};
+// type PostsResponse = {
+//   posts: PostType[]
+// };
 
 export default function Home() {
 
-  const [posts, setPosts] = useState<PostType[]>([]);
+  const [posts, setPosts] = useState<MicroCmsPost[]>([]);
+  // const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   // APIでpostsを取得する処理をuseEffectで実行します。
   useEffect(() => {
     const fetcher = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/posts`)
-        const data = await res.json() as PostsResponse;
-        setPosts(data.posts)
+        const res = await fetch('https://hixddt5c8l.microcms.io/api/v1/posts', {
+          headers: {
+            'X-MICROCMS-API-KEY': process.env
+              .NEXT_PUBLIC_MICROCMS_API_KEY as string,
+          },
+        })
+        const { contents } = await res.json()
+        setPosts(contents)
       } finally {
         setLoading(false);
       }
@@ -30,6 +35,9 @@ export default function Home() {
 
   if(loading) {
     return <p>Loading...</p>;
+  }
+  if (!Array.isArray(posts) || posts.length === 0) {
+    return <p>No posts available.</p>; // postsが空または配列でない場合
   }
   return (
     <ul className='card'>
@@ -44,7 +52,7 @@ export default function Home() {
                 <p className={styles.card__date}>{dateText}</p>
                 <ul className={styles.category}>
                   {elem.categories.map(category =>
-                    <li className={styles.category__item} key={category}>{category}</li>
+                    <li className={styles.category__item} key={category.id}>{category.name}</li>
                   )}
                 </ul>
               </div>

@@ -1,4 +1,9 @@
+.card{
+  padding: 80px 0 0;
+}
+
 .card__item {
+  max-width: 800px;
   margin: 0 auto 40px;
 }
 
@@ -83,4 +88,47 @@
 .post__details{
   font-size: 1rem;
   line-height: 1.5;
+}
+
+.createButton {
+  display: inline-block;
+  padding: 10px 15px;
+  background-color: #0070f3;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  text-align: center;
+}
+
+
+.title{
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.aside__wrapper{
+  display: flex;
+}
+.aside{
+  width: 20%;
+  min-height: 100vh;
+  background-color: #eee;
+  padding: 40px;
+}
+
+.aside__link{
+  font-weight: bold;
+  display: block;
+  margin: 0 0 20px;
+}
+
+.listContent{
+  width: 80%;
+  padding: 40px;
+}
+
+.bloglist__header{
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 20px;
 }
