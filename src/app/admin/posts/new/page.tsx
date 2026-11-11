@@ -9,7 +9,7 @@ export default function NewPostPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("https://placehold.jp/800x400.png",);
+  const [thumbnailImageKey, setThumbnailImageKey] = useState("");
   const [allCategories, setAllCategories] = useState<CategoryType[]>([]);
   const [categories, setCategories] = useState<number[]>([]);
 
@@ -29,7 +29,7 @@ export default function NewPostPage() {
       const body:CreatePostRequestBody ={
         title,
         content,
-        thumbnailUrl: thumbnailUrl,
+        thumbnailImageKey: thumbnailImageKey,
         categories: categories.map((id) => ({id}))
       }
       const res = await fetch(`/api/admin/posts`,{
@@ -59,12 +59,12 @@ export default function NewPostPage() {
         pageTitle="記事作成"
         title={title}
         content={content}
-        thumbnailUrl={thumbnailUrl}
+        thumbnailImageKey={thumbnailImageKey}
         allCategories={allCategories}
         categories={categories}
         onChangeTitle={setTitle}
         onChangeContent={setContent}
-        onChangeThumbnailUrl={setThumbnailUrl}
+        onChangeThumbnailImageKey={setThumbnailImageKey}
         onChangeCategories={setCategories}
         onSubmit={handleSubmit}
         buttonText="作成"

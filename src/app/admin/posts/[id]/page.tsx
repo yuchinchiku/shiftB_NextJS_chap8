@@ -12,7 +12,7 @@ export default function EditPostPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("https://placehold.jp/800x400.png",);
+  const [thumbnailImageKey, setThumbnailImageKey] = useState("");
   const [allCategories, setAllCategories] = useState<CategoryType[]>([]);
   const [categories, setCategories] = useState<number[]>([]);
 
@@ -42,7 +42,7 @@ export default function EditPostPage() {
 
       setTitle(data.post.title);
       setContent(data.post.content);
-      setThumbnailUrl(data.post.thumbnailUrl);
+      setThumbnailImageKey(data.post.thumbnailImageKey);
       setCategories(
         data.post.categories.map((category) => category.id)
       );
@@ -66,7 +66,7 @@ useEffect(() => {
       const body:UpdatePostRequestBody ={
         title,
         content,
-        thumbnailUrl: thumbnailUrl,
+        thumbnailImageKey: thumbnailImageKey,
         categories: categories.map((id) => ({id}))
       }
       const res = await fetch(`/api/admin/posts/${id}`,{
@@ -108,12 +108,12 @@ useEffect(() => {
         pageTitle="記事編集"
         title={title}
         content={content}
-        thumbnailUrl={thumbnailUrl}
+        thumbnailImageKey={thumbnailImageKey}
         allCategories={allCategories}
         categories={categories}
         onChangeTitle={setTitle}
         onChangeContent={setContent}
-        onChangeThumbnailUrl={setThumbnailUrl}
+        onChangeThumbnailImageKey={setThumbnailImageKey}
         onChangeCategories={setCategories}
         onSubmit={handleSubmit}
         buttonText="更新"

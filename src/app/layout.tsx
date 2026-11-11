@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import Header from "@/app/_components/Header"
 import React, { CSSProperties } from 'react'
-import { useRouter } from 'next/router';
 import '@/styles/reset.scss'
 import styles from '@/styles/styles.module.scss'
 

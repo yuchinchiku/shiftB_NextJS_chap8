@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { supabase } from "@/app/_libs/supabase";
 import type {PostListResponse, CreatePostRequestBody, CreatePostResponse, ErrorResponse} from '@/app/_types/PostType'
 
 const prisma  = new PrismaClient()
 
 export const GET = async (request: NextRequest) => {
+  // GET関数の引数からrequestを受け取り、その中にAuthorizationヘッダーが含まれているので、それを取り出す
+  const token = request.headers.get('Authorization') ?? ''
+
+  // supabaseに対してtokenを送る
+  const { error } = await supabase.auth.getUser(token);
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 })
+
+　　　　// tokenが正しい場合、以降が実行される
   try{
     const posts = await prisma.post.findMany({
       include: {
@@ -38,14 +50,26 @@ export const GET = async (request: NextRequest) => {
       }))
     }
     return NextResponse.json(response,{ status: 200 } )
-  } catch (error) {
-    if (error instanceof Error){
-      const response: ErrorResponse = {
-        status: error.message,
-      }
-      return NextResponse.json(response, { status: 400 })
-    }
-  }
+  } 
+  // catch (error) {
+  //   if (error instanceof Error){
+  //     const response: ErrorResponse = {
+  //       status: error.message,
+  //     }
+  //     return NextResponse.json(response, { status: 400 })
+  //   }
+  // }
+  catch (error) {
+  console.error("GET API ERROR:", error);
+
+  const message =
+    error instanceof Error ? error.message : String(error);
+
+  return NextResponse.json(
+    { status: message },
+    { status: 500 }
+  );
+}
 }
 
 // context とは？
@@ -57,13 +81,13 @@ export const GET = async (request: NextRequest) => {
 export const POST = async (request: Request, context: any) => {
   try{
     const body = await request.json()
-    const { title, content, categories, thumbnailUrl } : CreatePostRequestBody = body
+    const { title, content, categories, thumbnailImageKey } : CreatePostRequestBody = body
 
     const data = await prisma.post.create({
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       }
     })
     // ↑ここまでで記事だけは作られている
