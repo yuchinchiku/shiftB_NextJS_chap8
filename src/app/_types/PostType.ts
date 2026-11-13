@@ -3,7 +3,7 @@ import type { CategoryType } from '@/app/_types/CategoryTypes';
 export type PostType = {
   id: number;
   title:string;
-  thumbnailUrl: string;
+  thumbnailImageKey: string;
   createdAt: string;
   categories: CategoryType[];
   content: string;
@@ -18,7 +18,7 @@ export type UpdatePostRequestBody = {
   title:string;
   content: string;
   categories: {id: number}[];
-  thumbnailUrl: string;
+  thumbnailImageKey: string;
 
 }
 
@@ -38,7 +38,7 @@ export type CreatePostRequestBody = {
   title: string;
   content: string;
   categories: { id: number }[];
-  thumbnailUrl: string;
+  thumbnailImageKey: string;
 }
 
 export type PostListType = {

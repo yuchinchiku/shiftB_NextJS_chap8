@@ -1,27 +1,34 @@
 "use client";
 import React, { useEffect, useState }  from "react";
 import { useRouter } from "next/navigation";
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
 import PostForm from "@/app/_components/PostForm";
 import type { CategoryType, CategoriesResponse } from '@/app/_types/CategoryTypes'
 import type { CreatePostRequestBody, CreatePostResponse} from '@/app/_types/PostType'
 
 export default function NewPostPage() {
   const router = useRouter();
+  const { token, isLoading } = useSupabaseSession();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("https://placehold.jp/800x400.png",);
+  const [thumbnailImageKey, setThumbnailImageKey] = useState("");
   const [allCategories, setAllCategories] = useState<CategoryType[]>([]);
   const [categories, setCategories] = useState<number[]>([]);
 
   useEffect(() => {
+    if(isLoading || !token) return;
     const fetchCategories = async () => {
-      const res = await fetch(`/api/admin/categories`);
+      const res = await fetch(`/api/admin/categories`,{
+        headers:{
+          Authorization: token,
+        }
+      });
       const data: CategoriesResponse = await res.json();
 
       setAllCategories(data.categories ?? []);
     }
     fetchCategories();
-  },[])
+  },[token, isLoading]);
 
   const handleSubmit = async (e:React.FormEvent) => {
     e.preventDefault();
@@ -29,13 +36,14 @@ export default function NewPostPage() {
       const body:CreatePostRequestBody ={
         title,
         content,
-        thumbnailUrl: thumbnailUrl,
+        thumbnailImageKey: thumbnailImageKey,
         categories: categories.map((id) => ({id}))
       }
       const res = await fetch(`/api/admin/posts`,{
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token ?? '',
         },
         body: JSON.stringify(body),
     });
@@ -59,12 +67,12 @@ export default function NewPostPage() {
         pageTitle="記事作成"
         title={title}
         content={content}
-        thumbnailUrl={thumbnailUrl}
+        thumbnailImageKey={thumbnailImageKey}
         allCategories={allCategories}
         categories={categories}
         onChangeTitle={setTitle}
         onChangeContent={setContent}
-        onChangeThumbnailUrl={setThumbnailUrl}
+        onChangeThumbnailImageKey={setThumbnailImageKey}
         onChangeCategories={setCategories}
         onSubmit={handleSubmit}
         buttonText="作成"
