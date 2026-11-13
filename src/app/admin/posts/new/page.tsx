@@ -1,12 +1,14 @@
 "use client";
 import React, { useEffect, useState }  from "react";
 import { useRouter } from "next/navigation";
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
 import PostForm from "@/app/_components/PostForm";
 import type { CategoryType, CategoriesResponse } from '@/app/_types/CategoryTypes'
 import type { CreatePostRequestBody, CreatePostResponse} from '@/app/_types/PostType'
 
 export default function NewPostPage() {
   const router = useRouter();
+  const { token, isLoading } = useSupabaseSession();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [thumbnailImageKey, setThumbnailImageKey] = useState("");
@@ -14,14 +16,19 @@ export default function NewPostPage() {
   const [categories, setCategories] = useState<number[]>([]);
 
   useEffect(() => {
+    if(isLoading || !token) return;
     const fetchCategories = async () => {
-      const res = await fetch(`/api/admin/categories`);
+      const res = await fetch(`/api/admin/categories`,{
+        headers:{
+          Authorization: token,
+        }
+      });
       const data: CategoriesResponse = await res.json();
 
       setAllCategories(data.categories ?? []);
     }
     fetchCategories();
-  },[])
+  },[token, isLoading]);
 
   const handleSubmit = async (e:React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +43,7 @@ export default function NewPostPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token ?? '',
         },
         body: JSON.stringify(body),
     });

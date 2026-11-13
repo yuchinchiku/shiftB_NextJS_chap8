@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState }  from "react";
 import { useParams,useRouter } from "next/navigation";
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
 import PostForm from "@/app/_components/PostForm";
 import type { CategoryType, CategoriesResponse, } from '@/app/_types/CategoryTypes'
 import type { PostResponse, UpdatePostRequestBody} from '@/app/_types/PostType'
@@ -8,7 +9,7 @@ import type { PostResponse, UpdatePostRequestBody} from '@/app/_types/PostType'
 export default function EditPostPage() {
   const { id } = useParams();
   const router = useRouter();
-
+  const { token, isLoading:sessionLoading } = useSupabaseSession();
   const [loading, setLoading] = useState<boolean>(true);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -17,45 +18,55 @@ export default function EditPostPage() {
   const [categories, setCategories] = useState<number[]>([]);
 
   useEffect(() => {
+    if(sessionLoading || !token) return;
     const fetchCategories = async () => {
-      const res = await fetch(`/api/admin/categories`);
+      const res = await fetch(`/api/admin/categories`,{
+        headers:{
+          Authorization: token,
+        }
+      });
       const data: CategoriesResponse = await res.json();
 
       setAllCategories(data.categories ?? []);
     }
     fetchCategories();
-  },[])
+  },[token, sessionLoading]);
 
   useEffect(() => {
-  const fetcher = async () => {
-    try {
-      const res = await fetch(`/api/admin/posts/${id}`);
+    if(sessionLoading || !token) return;
+    const fetcher = async () => {
+      try {
+        const res = await fetch(`/api/admin/posts/${id}`,{
+        headers:{
+          Authorization: token,
+        }
+      });
 
-      console.log('Response Status:', res.status);
-      console.log('Response Headers:', res.headers);
-      const data: PostResponse = await res.json();
-      console.log('API Response:', data);
+        console.log('Response Status:', res.status);
+        console.log('Response Headers:', res.headers);
+        const data: PostResponse = await res.json();
+        console.log('API Response:', data);
 
-      if(!data.post){
-        return;
+        if(!data.post){
+          return;
+        }
+
+        setTitle(data.post.title);
+        setContent(data.post.content);
+        setThumbnailImageKey(data.post.thumbnailImageKey);
+        setCategories(
+          data.post.categories.map((category) => category.id)
+        );
+        console.log(data.post)
+      } catch (error) {
+        console.error('Error fetching post:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setTitle(data.post.title);
-      setContent(data.post.content);
-      setThumbnailImageKey(data.post.thumbnailImageKey);
-      setCategories(
-        data.post.categories.map((category) => category.id)
-      );
-      console.log(data.post)
-    } catch (error) {
-      console.error('Error fetching post:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetcher();
-}, [id]);
+    fetcher();
+  }, [id, token, sessionLoading]);
 useEffect(() => {
   console.log("categories updated:", categories);
 }, [categories]);
@@ -73,6 +84,7 @@ useEffect(() => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token ?? '',
         },
         body: JSON.stringify(body),
     });
@@ -94,6 +106,9 @@ useEffect(() => {
     if(!confirm('記事を削除しますか？')) return
     await fetch(`/api/admin/posts/${id}`,{
       method: 'DELETE',
+      headers: {
+        Authorization: token ?? '',
+      },
     })
     alert('記事を削除しました')
     router.push("/admin/posts");
