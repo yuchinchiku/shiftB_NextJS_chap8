@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState }  from "react";
+import useSWR from "swr";
+import { useState }  from "react";
 import { useRouter } from "next/navigation";
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
 import PostForm, { type SubmitData } from "@/app/_components/PostForm";
-import type { CategoryType, CategoriesResponse } from '@/app/_types/CategoryTypes'
+import type { CategoriesResponse } from '@/app/_types/CategoryTypes'
 import type { CreatePostRequestBody, CreatePostResponse, PostData} from '@/app/_types/PostType'
 
 const initialData: PostData = {
@@ -17,22 +18,27 @@ export default function NewPostPage() {
   const router = useRouter();
   const { token, isLoading } = useSupabaseSession();
   const [thumbnailImageKey, setThumbnailImageKey] = useState("");
-  const [allCategories, setAllCategories] = useState<CategoryType[]>([]);
 
-  useEffect(() => {
-    if(isLoading || !token) return;
-    const fetchCategories = async () => {
-      const res = await fetch(`/api/admin/categories`,{
-        headers:{
-          Authorization: token,
-        }
-      });
-      const data: CategoriesResponse = await res.json();
+  const categoriesFetcher = async ([url, token]: [string, string]) => {
+    const res = await fetch(url,{
+      headers: {
+        Authorization: token,
+      },
+    });
 
-      setAllCategories(data.categories ?? []);
+    if (!res.ok) {
+      throw new Error("カテゴリーの取得に失敗しました");
     }
-    fetchCategories();
-  },[token, isLoading]);
+    const data: CategoriesResponse = await res.json();
+    return data;
+  };
+  const { data:categoriesData, error:categoriesError, isLoading:categoriesLoading } 
+  = useSWR(
+    token ? ["/api/admin/categories",token]:null,
+    categoriesFetcher
+  );
+
+  const categories = categoriesData?.categories ?? [];
 
   const handleSubmit = async　(data:SubmitData) => {
     if (!token) return;
@@ -64,13 +70,19 @@ export default function NewPostPage() {
     }
 
   };
+  if(isLoading || categoriesLoading) {
+    return <p>Loading...</p>;
+  }
+  if(categoriesError){
+    return <p>{categoriesError.message}</p>;
+  }
 
   return (
     <>
       <PostForm
         pageTitle="記事作成"
         thumbnailImageKey={thumbnailImageKey}
-        allCategories={allCategories}
+        allCategories={categories}
         onChangeThumbnailImageKey={setThumbnailImageKey}
         onSubmit={handleSubmit}
         buttonText="作成"

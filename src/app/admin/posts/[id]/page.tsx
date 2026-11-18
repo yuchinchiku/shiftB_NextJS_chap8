@@ -1,80 +1,76 @@
 "use client";
-import React, { useEffect, useState }  from "react";
+import useSWR from "swr";
 import { useParams,useRouter } from "next/navigation";
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
 import PostForm, { type SubmitData } from "@/app/_components/PostForm";
-import type { CategoryType, CategoriesResponse, } from '@/app/_types/CategoryTypes'
-import type { PostResponse, UpdatePostRequestBody,PostData} from '@/app/_types/PostType'
+import type { CategoriesResponse, } from '@/app/_types/CategoryTypes'
+import type { PostResponse, UpdatePostRequestBody} from '@/app/_types/PostType'
 
 export default function EditPostPage() {
   const { id } = useParams();
   const router = useRouter();
   const { token, isLoading:sessionLoading } = useSupabaseSession();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [post, setPost] = useState<PostData | null>(null);
-  const [allCategories, setAllCategories] = useState<CategoryType[]>([]);
 
-  useEffect(() => {
-    if(sessionLoading || !token) return;
-    const fetchCategories = async () => {
-      const res = await fetch(`/api/admin/categories`,{
-        headers:{
-          Authorization: token,
-        }
-      });
-      const data: CategoriesResponse = await res.json();
+  const categoriesFetcher = async ([url, token]: [string, string]) => {
+    const res = await fetch(url,{
+      headers: {
+        Authorization: token,
+      },
+    });
 
-      setAllCategories(data.categories ?? []);
+    if (!res.ok) {
+      throw new Error("カテゴリーの取得に失敗しました");
     }
-    fetchCategories();
-  },[token, sessionLoading]);
+    const data: CategoriesResponse = await res.json();
+    return data;
+  };
+  const { data:categoriesData, error:categoriesError, isLoading:categoriesLoading } 
+  = useSWR(
+    token ? ["/api/admin/categories",token]:null,
+    categoriesFetcher
+  );
 
-  useEffect(() => {
-    if(sessionLoading || !token) return;
-    const fetcher = async () => {
-      try {
-        const res = await fetch(`/api/admin/posts/${id}`,{
-        headers:{
-          Authorization: token,
-        }
-      });
+  const categories = categoriesData?.categories ?? [];
 
-        console.log('Response Status:', res.status);
-        console.log('Response Headers:', res.headers);
-        const data: PostResponse = await res.json();
-        console.log('API Response:', data);
 
-        if(!data.post){
-          return;
-        }
+  const postFetcher = async ([url, token]: [string, string]) => {
+    const res = await fetch(url,{
+      headers: {
+        Authorization: token,
+      },
+    });
 
-        setPost({
-          title:data.post.title,
-          content: data.post.content,
-          thumbnailImageKey: data.post.thumbnailImageKey,
-          categories: data.post.categories.map((category) => category.id)
-        })
-        console.log(data.post)
-      } catch (error) {
-        console.error('Error fetching post:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!res.ok) {
+      throw new Error("記事の取得に失敗しました");
+    }
+    const data: PostResponse = await res.json();
+    if(!data.post){
+      throw new Error("記事が見つかりません");
+    }
+    return{
+      title:data.post.title,
+      content: data.post.content,
+      thumbnailImageKey: data.post.thumbnailImageKey,
+      categories: data.post.categories.map((category) => category.id)
+    }
+  };
 
-    fetcher();
-  }, [id, token, sessionLoading]);
+  const { data:post, error:postError, isLoading:postLoading, mutate } 
+  = useSWR(
+    token ? [`/api/admin/posts/${id}`,token]:null,
+    postFetcher
+  );
 
   const handleChangeThumbnailImageKey = (key:string) => {
-    setPost((prev)=>{
+    mutate((prev)=>{
       if(!prev) return prev;
 
       return{
         ...prev,
         thumbnailImageKey: key,
-      }
-    })
-  }
+      };
+    }, {revalidate: false});
+  };
 
   const handleSubmit = async (data:SubmitData) => {
     if(!post) return;
@@ -123,8 +119,14 @@ export default function EditPostPage() {
       }
   };
 
-  if(loading) {
+  if(sessionLoading || categoriesLoading || postLoading) {
     return <p>Loading...</p>;
+  }
+  if(categoriesError){
+    return <p>{categoriesError.message}</p>;
+  }
+  if(postError){
+    return <p>{postError.message}</p>;
   }
   if(!post){
     return <p>記事が見つかりません</p>;
@@ -133,7 +135,7 @@ export default function EditPostPage() {
     <>
       <PostForm
         pageTitle="記事編集"
-        allCategories={allCategories}
+        allCategories={categories}
         onSubmit={handleSubmit}
         buttonText="更新"
         onDelete={handleDeletePost}

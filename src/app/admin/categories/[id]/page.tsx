@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState }  from "react";
+import useSWR from "swr";
 import { useParams,useRouter } from "next/navigation";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import CategoryForm from "@/app/_components/CategoryForm";
@@ -8,27 +8,33 @@ import type { CategoryResponse, UpdateCategoryRequestBody } from '@/app/_types/C
 export default function EditCategoryPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [initialName, setInitialName] = useState("");
   const { token, isLoading: sessionLoading } = useSupabaseSession();
 
-  useEffect(() => {
-    if (sessionLoading || !token) return;
-    const fetchCategories = async () => {
-      const res = await fetch(`/api/admin/categories/${id}`,{
-        headers:{
-          Authorization: token,
-        }
-      });
-      const data:CategoryResponse = await res.json();
+  const fetcher = async ([url, token]: [string, string]) => {
+    const res = await fetch(url,{
+      headers: {
+        Authorization: token,
+      },
+    });
 
-      if(!data.categories){
-        return;
-      }
-      setInitialName(data.categories.name);
+    if (!res.ok) {
+      throw new Error("カテゴリーの取得に失敗しました");
     }
-    fetchCategories();
+    const data: CategoryResponse = await res.json();
+    return data;
+  };
+  const { data, error, isLoading } = useSWR(
+    token ? [`/api/admin/categories/${id}`,token]:null,
+    fetcher
+  );
+  const initialName = data?.categories?.name ?? "";
 
-}, [id,token,sessionLoading]);
+  if(sessionLoading || isLoading) {
+    return <p>Loading...</p>;
+  }
+  if (error) {
+    return <p>{error.message}</p>;
+  }
 
   const handleSubmit = async (data:{name:string}) => {
     if (!token) return;
