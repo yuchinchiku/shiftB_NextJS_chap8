@@ -1,21 +1,26 @@
 'use client'
 
 import { supabase } from '@/app/_libs/supabase' // 前の工程で作成したファイル
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+
+type FormData = {
+  email: string
+  password: string
+}
 
 export default function Page() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: {isSubmitting},
+  }=useForm<FormData>()
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    setIsSubmitting(true)
+  const onSubmit = async (data: FormData) => {
 
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: data.email,
+      password: data.password,
       options: {
         emailRedirectTo: `http://localhost:3000/login`,
       },
@@ -23,16 +28,14 @@ export default function Page() {
     if (error) {
       alert('登録に失敗しました')
     } else {
-      setEmail('')
-      setPassword('')
+      reset()
       alert('確認メールを送信しました。')
     }
-    setIsSubmitting(false)
   }
 
   return (
     <div className="flex justify-center pt-60">
-      <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-100">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full max-w-100">
         <div>
           <label
             htmlFor="email"
@@ -42,13 +45,10 @@ export default function Page() {
           </label>
           <input
             type="email"
-            name="email"
             id="email"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             placeholder="name@company.com"
-            required
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
+            {...register('email', {required: true})}
             disabled={isSubmitting}
           />
         </div>
@@ -61,13 +61,10 @@ export default function Page() {
           </label>
           <input
             type="password"
-            name="password"
             id="password"
             placeholder="••••••••"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-            required
-            onChange={(e) => setPassword(e.target.value)}
-            value={password}
+            {...register('password', {required: true})}
             disabled={isSubmitting}
           />
         </div>

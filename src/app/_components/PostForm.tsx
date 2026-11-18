@@ -2,13 +2,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useForm } from 'react-hook-form'
 import Image from "next/image";
 import type { ChangeEvent } from "react";
-
+import type { PostData } from "@/app/_types/PostType";
 import styles from "@/styles/contact.module.scss";
 import { supabase } from "@/app/_libs/supabase";
 import { v4 as uuidv4 } from "uuid"; // 固有IDを生成するライブラリ
 
+type FormData = {
+  title: string
+  content: string
+  categories:string[]
+}
+export type SubmitData = {
+  title: string
+  content: string
+  categories: number[]
+}
 type Category = {
   id: number;
   name: string;
@@ -16,36 +27,24 @@ type Category = {
 
 type PostFormProps = {
   pageTitle: string;
-  title: string;
-  content: string;
   thumbnailImageKey: string;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (data:SubmitData) => void;
   buttonText: string;
   onDelete?: () => void;
-
-  onChangeTitle: (title: string) => void;
-  onChangeContent: (content: string) => void;
   onChangeThumbnailImageKey: (thumbnailImageKey: string) => void;
-
   allCategories: Category[];
-  categories: number[];
-  onChangeCategories: React.Dispatch<React.SetStateAction<number[]>>;
+  initialData: PostData;
 };
 
 export default function PostForm({
   pageTitle,
-  title,
-  content,
   thumbnailImageKey,
   allCategories,
-  categories,
-  onChangeTitle,
-  onChangeContent,
   onChangeThumbnailImageKey,
-  onChangeCategories,
   onSubmit,
   buttonText,
   onDelete,
+  initialData,
 }: PostFormProps) {
   // Imageタグのsrcにセットする画像URLを持たせるstate
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
@@ -103,8 +102,25 @@ export default function PostForm({
     onChangeThumbnailImageKey(data.path);
   };
 
+  const {
+    register,
+    handleSubmit,
+  }=useForm<FormData>({
+    defaultValues:{
+      title: initialData.title,
+      content: initialData.content,
+      categories: initialData.categories.map(String),
+    }
+  })
+
+  const handleFormSubmit = (data:FormData) => {
+    onSubmit({
+      ...data,
+      categories: data.categories.map(Number),
+    })
+  }
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <h1 className={styles.title}>{pageTitle}</h1>
 
       <div className={styles.form__item}>
@@ -112,8 +128,7 @@ export default function PostForm({
         <div className={styles.form__input}>
           <input
             className={styles.input}
-            value={title}
-            onChange={(e) => onChangeTitle(e.target.value)}
+            {...register('title')}
           />
         </div>
       </div>
@@ -123,9 +138,8 @@ export default function PostForm({
         <div className={styles.form__input}>
           <textarea
             className={styles.textarea}
-            value={content}
             rows={8}
-            onChange={(e) => onChangeContent(e.target.value)}
+            {...register('content')}
           />
         </div>
       </div>
@@ -164,20 +178,8 @@ export default function PostForm({
               <input
                 type="checkbox"
                 className={styles.form__checkbox}
-                checked={categories.includes(cat.id)}
-                onChange={(e) => {
-                  const id = cat.id;
-                  onChangeCategories((prev) => {
-                    const next = e.target.checked
-                      ? prev.includes(id)
-                        ? prev
-                        : [...prev, id]
-                      : prev.filter((i) => i !== id);
-
-                    console.log("next:", next);
-                    return next;
-                  });
-                }}
+                value={cat.id}
+                {...register("categories")}
               />
               {cat.name}
             </label>

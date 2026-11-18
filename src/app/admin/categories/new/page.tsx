@@ -1,6 +1,6 @@
 "use client";
-import React, { useState }  from "react";
 import { useRouter } from "next/navigation";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import CategoryForm from "@/app/_components/CategoryForm";
 import type { CreateCategoryResponse,CreateCategoryRequestBody } from '@/app/_types/CategoryTypes'
 
@@ -8,27 +8,26 @@ import type { CreateCategoryResponse,CreateCategoryRequestBody } from '@/app/_ty
 
 export default function NewCategoryPage() {
   const router = useRouter();
+  const { token } = useSupabaseSession();
 
-  const [name, setName] = useState("");
-
-
-  const handleSubmit = async (e:React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data:{name:string}) => {
+    if (!token) return;
     try {
       const body: CreateCategoryRequestBody = {
-        name
+        name: data.name,
       }
       const res = await fetch(`/api/admin/categories`,{
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token,
         },
         body: JSON.stringify(body),
     });
 
       if (res.ok) {
-        const data: CreateCategoryResponse = await res.json();
-        alert(data.message);
+        const resData: CreateCategoryResponse = await res.json();
+        alert(resData.message);
         router.push("/admin/categories");
       } else {
         console.error("作成失敗:", await res.text());
@@ -44,8 +43,6 @@ export default function NewCategoryPage() {
     <>
       <CategoryForm
         pageTitle="カテゴリー作成"
-        name={name}
-        onChangeName={setName}
         onSubmit={handleSubmit}
         buttonText="作成"
       />

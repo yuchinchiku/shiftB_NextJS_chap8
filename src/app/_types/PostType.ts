@@ -58,3 +58,10 @@ export type CreatePostResponse = {
   message: string;
   id: number;
 };
+
+export type PostData = {
+  title: string;
+  content: string;
+  thumbnailImageKey: string;
+  categories: number[];
+};

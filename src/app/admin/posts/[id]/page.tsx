@@ -2,20 +2,17 @@
 import React, { useEffect, useState }  from "react";
 import { useParams,useRouter } from "next/navigation";
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
-import PostForm from "@/app/_components/PostForm";
+import PostForm, { type SubmitData } from "@/app/_components/PostForm";
 import type { CategoryType, CategoriesResponse, } from '@/app/_types/CategoryTypes'
-import type { PostResponse, UpdatePostRequestBody} from '@/app/_types/PostType'
+import type { PostResponse, UpdatePostRequestBody,PostData} from '@/app/_types/PostType'
 
 export default function EditPostPage() {
   const { id } = useParams();
   const router = useRouter();
   const { token, isLoading:sessionLoading } = useSupabaseSession();
   const [loading, setLoading] = useState<boolean>(true);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [thumbnailImageKey, setThumbnailImageKey] = useState("");
+  const [post, setPost] = useState<PostData | null>(null);
   const [allCategories, setAllCategories] = useState<CategoryType[]>([]);
-  const [categories, setCategories] = useState<number[]>([]);
 
   useEffect(() => {
     if(sessionLoading || !token) return;
@@ -51,12 +48,12 @@ export default function EditPostPage() {
           return;
         }
 
-        setTitle(data.post.title);
-        setContent(data.post.content);
-        setThumbnailImageKey(data.post.thumbnailImageKey);
-        setCategories(
-          data.post.categories.map((category) => category.id)
-        );
+        setPost({
+          title:data.post.title,
+          content: data.post.content,
+          thumbnailImageKey: data.post.thumbnailImageKey,
+          categories: data.post.categories.map((category) => category.id)
+        })
         console.log(data.post)
       } catch (error) {
         console.error('Error fetching post:', error);
@@ -67,18 +64,26 @@ export default function EditPostPage() {
 
     fetcher();
   }, [id, token, sessionLoading]);
-useEffect(() => {
-  console.log("categories updated:", categories);
-}, [categories]);
 
-  const handleSubmit = async (e:React.FormEvent) => {
-    e.preventDefault();
+  const handleChangeThumbnailImageKey = (key:string) => {
+    setPost((prev)=>{
+      if(!prev) return prev;
+
+      return{
+        ...prev,
+        thumbnailImageKey: key,
+      }
+    })
+  }
+
+  const handleSubmit = async (data:SubmitData) => {
+    if(!post) return;
     try {
       const body:UpdatePostRequestBody ={
-        title,
-        content,
-        thumbnailImageKey: thumbnailImageKey,
-        categories: categories.map((id) => ({id}))
+        title:data.title,
+        content: data.content,
+        thumbnailImageKey: post.thumbnailImageKey,
+        categories: (data.categories.map((id)=>({id})) ),
       }
       const res = await fetch(`/api/admin/posts/${id}`,{
         method: "PUT",
@@ -103,36 +108,38 @@ useEffect(() => {
 
 
   const handleDeletePost =  async () => {
-    if(!confirm('記事を削除しますか？')) return
-    await fetch(`/api/admin/posts/${id}`,{
+    if(!confirm('記事を削除しますか？')) return;
+    const res = await fetch(`/api/admin/posts/${id}`,{
       method: 'DELETE',
       headers: {
         Authorization: token ?? '',
       },
     })
-    alert('記事を削除しました')
-    router.push("/admin/posts");
+    if (res.ok){
+      alert('記事を削除しました')
+      router.push("/admin/posts");
+    } else {
+        alert('削除できませんでした')
+      }
   };
 
   if(loading) {
     return <p>Loading...</p>;
   }
+  if(!post){
+    return <p>記事が見つかりません</p>;
+  }
   return (
     <>
       <PostForm
         pageTitle="記事編集"
-        title={title}
-        content={content}
-        thumbnailImageKey={thumbnailImageKey}
         allCategories={allCategories}
-        categories={categories}
-        onChangeTitle={setTitle}
-        onChangeContent={setContent}
-        onChangeThumbnailImageKey={setThumbnailImageKey}
-        onChangeCategories={setCategories}
         onSubmit={handleSubmit}
         buttonText="更新"
         onDelete={handleDeletePost}
+        initialData={post}
+        thumbnailImageKey={post.thumbnailImageKey}
+        onChangeThumbnailImageKey={handleChangeThumbnailImageKey}
       />
     </>
 

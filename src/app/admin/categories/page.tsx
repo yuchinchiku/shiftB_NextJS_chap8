@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import React, { useEffect, useState }  from "react";
+import { useEffect, useState }  from "react";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import styles from '@/styles/blogList.module.scss'
 import type { CategoryType, CategoriesResponse } from '@/app/_types/CategoryTypes'
 
@@ -8,24 +9,32 @@ import type { CategoryType, CategoriesResponse } from '@/app/_types/CategoryType
 export default function CategoryPage() {
   const [categories, setCategories] =  useState<CategoryType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  // APIでpostsを取得する処理をuseEffectで実行します。
-
+  const { token, isLoading: sessionLoading } = useSupabaseSession();
+  // APIでカテゴリーを取得する処理
   useEffect(() => {
-  const fetcher = async () => {
-    try {
-      const res = await fetch('/api/admin/categories');
-      const data: CategoriesResponse = await res.json();
+    if (sessionLoading || !token) return;
+    const fetcher = async () => {
+      try {
+        const res = await fetch('/api/admin/categories',{
+          headers: {
+            Authorization: token,
+          },
+        });
 
-      setCategories(data.categories);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (!res.ok) {
+          throw new Error("カテゴリーの取得に失敗しました");
+        }
+        const data: CategoriesResponse = await res.json();
+        setCategories(data.categories ?? []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetcher();
-}, []);
+    fetcher();
+}, [token, sessionLoading]);
 
   if(loading) {
     return <p>Loading...</p>;
@@ -39,8 +48,7 @@ export default function CategoryPage() {
         </Link>
       </div>
       <ul>
-        {categories.map((category) => {
-          return (
+        {categories.map((category) => (
             <li className={styles.card__item} key={category.id}>
               <Link className={styles.card__link} href={`/admin/categories/${category.id}/`}>
                 <div className={styles.card__head}>
@@ -48,8 +56,7 @@ export default function CategoryPage() {
                 </div>
               </Link>
             </li>
-          );
-        })}
+        ))}
       </ul>
     </div>
   );
