@@ -1,78 +1,91 @@
 "use client";
-import React, { useEffect, useState }  from "react";
+import useSWR from "swr";
 import { useParams,useRouter } from "next/navigation";
-import PostForm from "@/app/_components/PostForm";
-import type { CategoryType, CategoriesResponse, } from '@/app/_types/CategoryTypes'
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
+import PostForm, { type SubmitData } from "@/app/_components/PostForm";
+import type { CategoriesResponse, } from '@/app/_types/CategoryTypes'
 import type { PostResponse, UpdatePostRequestBody} from '@/app/_types/PostType'
 
 export default function EditPostPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { token, isLoading:sessionLoading } = useSupabaseSession();
 
-  const [loading, setLoading] = useState<boolean>(true);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("https://placehold.jp/800x400.png",);
-  const [allCategories, setAllCategories] = useState<CategoryType[]>([]);
-  const [categories, setCategories] = useState<number[]>([]);
+  const categoriesFetcher = async ([url, token]: [string, string]) => {
+    const res = await fetch(url,{
+      headers: {
+        Authorization: token,
+      },
+    });
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const res = await fetch(`/api/admin/categories`);
-      const data: CategoriesResponse = await res.json();
-
-      setAllCategories(data.categories ?? []);
+    if (!res.ok) {
+      throw new Error("カテゴリーの取得に失敗しました");
     }
-    fetchCategories();
-  },[])
+    const data: CategoriesResponse = await res.json();
+    return data;
+  };
+  const { data:categoriesData, error:categoriesError, isLoading:categoriesLoading } 
+  = useSWR(
+    token ? ["/api/admin/categories",token]:null,
+    categoriesFetcher
+  );
 
-  useEffect(() => {
-  const fetcher = async () => {
-    try {
-      const res = await fetch(`/api/admin/posts/${id}`);
+  const categories = categoriesData?.categories ?? [];
 
-      console.log('Response Status:', res.status);
-      console.log('Response Headers:', res.headers);
-      const data: PostResponse = await res.json();
-      console.log('API Response:', data);
 
-      if(!data.post){
-        return;
-      }
+  const postFetcher = async ([url, token]: [string, string]) => {
+    const res = await fetch(url,{
+      headers: {
+        Authorization: token,
+      },
+    });
 
-      setTitle(data.post.title);
-      setContent(data.post.content);
-      setThumbnailUrl(data.post.thumbnailUrl);
-      setCategories(
-        data.post.categories.map((category) => category.id)
-      );
-      console.log(data.post)
-    } catch (error) {
-      console.error('Error fetching post:', error);
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error("記事の取得に失敗しました");
+    }
+    const data: PostResponse = await res.json();
+    if(!data.post){
+      throw new Error("記事が見つかりません");
+    }
+    return{
+      title:data.post.title,
+      content: data.post.content,
+      thumbnailImageKey: data.post.thumbnailImageKey,
+      categories: data.post.categories.map((category) => category.id)
     }
   };
 
-  fetcher();
-}, [id]);
-useEffect(() => {
-  console.log("categories updated:", categories);
-}, [categories]);
+  const { data:post, error:postError, isLoading:postLoading, mutate } 
+  = useSWR(
+    token ? [`/api/admin/posts/${id}`,token]:null,
+    postFetcher
+  );
 
-  const handleSubmit = async (e:React.FormEvent) => {
-    e.preventDefault();
+  const handleChangeThumbnailImageKey = (key:string) => {
+    mutate((prev)=>{
+      if(!prev) return prev;
+
+      return{
+        ...prev,
+        thumbnailImageKey: key,
+      };
+    }, {revalidate: false});
+  };
+
+  const handleSubmit = async (data:SubmitData) => {
+    if(!post) return;
     try {
       const body:UpdatePostRequestBody ={
-        title,
-        content,
-        thumbnailUrl: thumbnailUrl,
-        categories: categories.map((id) => ({id}))
+        title:data.title,
+        content: data.content,
+        thumbnailImageKey: post.thumbnailImageKey,
+        categories: (data.categories.map((id)=>({id})) ),
       }
       const res = await fetch(`/api/admin/posts/${id}`,{
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token ?? '',
         },
         body: JSON.stringify(body),
     });
@@ -91,33 +104,44 @@ useEffect(() => {
 
 
   const handleDeletePost =  async () => {
-    if(!confirm('記事を削除しますか？')) return
-    await fetch(`/api/admin/posts/${id}`,{
+    if(!confirm('記事を削除しますか？')) return;
+    const res = await fetch(`/api/admin/posts/${id}`,{
       method: 'DELETE',
+      headers: {
+        Authorization: token ?? '',
+      },
     })
-    alert('記事を削除しました')
-    router.push("/admin/posts");
+    if (res.ok){
+      alert('記事を削除しました')
+      router.push("/admin/posts");
+    } else {
+        alert('削除できませんでした')
+      }
   };
 
-  if(loading) {
+  if(sessionLoading || categoriesLoading || postLoading) {
     return <p>Loading...</p>;
+  }
+  if(categoriesError){
+    return <p>{categoriesError.message}</p>;
+  }
+  if(postError){
+    return <p>{postError.message}</p>;
+  }
+  if(!post){
+    return <p>記事が見つかりません</p>;
   }
   return (
     <>
       <PostForm
         pageTitle="記事編集"
-        title={title}
-        content={content}
-        thumbnailUrl={thumbnailUrl}
-        allCategories={allCategories}
-        categories={categories}
-        onChangeTitle={setTitle}
-        onChangeContent={setContent}
-        onChangeThumbnailUrl={setThumbnailUrl}
-        onChangeCategories={setCategories}
+        allCategories={categories}
         onSubmit={handleSubmit}
         buttonText="更新"
         onDelete={handleDeletePost}
+        initialData={post}
+        thumbnailImageKey={post.thumbnailImageKey}
+        onChangeThumbnailImageKey={handleChangeThumbnailImageKey}
       />
     </>
 

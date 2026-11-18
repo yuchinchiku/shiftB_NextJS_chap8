@@ -1,44 +1,39 @@
 "use client";
+import useSWR from "swr";
 import Link from "next/link";
-import React, { useEffect, useState }  from "react";
-import type { PostListResponse, PostListType } from "@/app/_types/PostType"
+import type { PostListResponse } from "@/app/_types/PostType"
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
 import styles from '@/styles/blogList.module.scss'
 
 
 export default function Home() {
-  const [posts, setPosts] = useState<PostListType[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  // APIでpostsを取得する処理をuseEffectで実行します。
+  const { token, isLoading: sessionLoading } = useSupabaseSession()
 
-  useEffect(() => {
-  const fetcher = async () => {
-    try {
-      const res = await fetch('/api/admin/posts');
+  const fetcher = async ([url, token]: [string, string]) => {
+    const res = await fetch(url,{
+      headers: {
+        Authorization: token,
+      },
+    });
 
-      console.log('Response Status:', res.status);
-      console.log('Response Headers:', res.headers);
-      const data: PostListResponse = await res.json();
-      console.log('API Response:', data);
-
-      setPosts(data.posts);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error("記事一覧の取得に失敗しました");
     }
+    const data: PostListResponse = await res.json();
+    return data;
   };
-
-  fetcher();
-}, []);
-
-  if(loading) {
+  const { data, error, isLoading } = useSWR(
+    token ? ["/api/admin/posts",token]:null,
+    fetcher
+  );
+  const posts = data?.posts ?? [];
+  if(sessionLoading || isLoading) {
     return <p>Loading...</p>;
   }
-  if (!Array.isArray(posts) || posts.length === 0) {
-    console.log("現在のposts:", posts);
-    // postsが空または配列でない場合
-    return <p>No posts available.</p>;
+  if (error) {
+    return <p>{error.message}</p>;
   }
+
   return (
     <div>
       <div className={styles.bloglist__header}>
